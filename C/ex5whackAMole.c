@@ -4,13 +4,18 @@
 #include <string.h>
 #include <stdio.h>
 
+#define BOARDSIZE 16
 
-void printConf(bool a[16]);
+void printBoard(bool a[BOARDSIZE]);
+void printPath(unsigned short cNode, unsigned short first);
 int readNextInt(FILE *fp);
-void getNextConf(char hit, bool current[16], bool (*new)[16]);
-unsigned short boolToShort(bool currentAr[16]);
+unsigned short boolToShort(bool currentAr[BOARDSIZE]);
 void enqueue(unsigned short number);
 unsigned short dequeue();
+void getNextBoard(char hit, bool current[BOARDSIZE], bool (*new)[BOARDSIZE]);
+void copyBoard(bool from[BOARDSIZE], bool to[BOARDSIZE]);
+void initializeArray(int nextInt, bool currentAr[BOARDSIZE], FILE * fp);
+unsigned short bfs(unsigned short firstBoard);
 
 
 typedef struct queueElement{
@@ -18,9 +23,13 @@ typedef struct queueElement{
   struct queueElement * next;
 }queueElement;
 
+
 queueElement **qBack = NULL;
 queueElement **qFront = NULL;
-
+bool seen[65536]; //flag if come across, used for BFS
+unsigned short parent[65536]; //holds the parent element from each node, used for printing the path
+char hitPosition[65536]; // holds the position the "Hammer" was applied (0-15)
+bool board[65536][BOARDSIZE]; //represents one board (4x4)
 
 int main(void){
   FILE *fp = fopen("input.txt","r");
@@ -28,74 +37,29 @@ int main(void){
     printf("No file found.\n");
     for(;;);
   }
-  
   qBack = (queueElement **)malloc(sizeof(queueElement **));
   qFront = (queueElement **)malloc(sizeof(queueElement **));
-
   (*qBack) = NULL;
   (*qFront)= NULL;
-
   int nextInt;
-  bool currentAr[16];
-  int i, j, temp = 0;
-  bool found = false;
-  unsigned short current = 1;
-  unsigned short first;
-  bool seen[65536];
-  unsigned short parent[65536];
-  char hitPosition[65536];
-  bool conf[65536][16];
+  bool currentAr[BOARDSIZE];
+  unsigned short firstBoard;
 
+  int i;
+  for (i = 0; i < BOARDSIZE; i++) *(currentAr + i) = false;
+  nextInt = readNextInt(fp);
+  initializeArray(nextInt, currentAr, fp);
+  firstBoard=boolToShort(currentAr);
+  parent[firstBoard] = firstBoard;
+  hitPosition[firstBoard] = 0;
 
-  for (i=0; i<16; i++) *(currentAr + i) = false;
-  nextInt=readNextInt(fp);
-
-  while (nextInt != 0){
-    printf("%d\t", nextInt);
-    currentAr[nextInt-1] = true;
-    nextInt = readNextInt(fp);
-  }
-  
-  first=boolToShort(currentAr);
-  parent[first] = first;
-  hitPosition[first] = 0;
-  for (i=0; i<16;i++)
-    conf[first][i] = currentAr[i];
-
-  enqueue(first); //start BFS
-  while (!found){
-    current = dequeue();
-    seen[current]=true;
-    found=true;
-    for (i = 0; i < 16; i++){
-      bool  new[16];
-      if (conf[current][i])
-      {
-	found=false;
-	getNextConf(i, conf[current], &new);
-	unsigned short newVal=0;
-	newVal = boolToShort(new);
-	if (!(seen[newVal]))
-	{
-	  parent[newVal] = current;
-	  hitPosition[newVal] = i;
-	  for (j = 0; j < 16; j++) 
-	    conf[newVal][j]  = new[j];
-	  enqueue(newVal);
-	}
-      }
-    }
-  }
-
-  while(current != first){
-    printf("%d\t",hitPosition[current]+1);
-    current = parent[current];
-  }
-  printf("\n");
+  for (i = 0; i < BOARDSIZE;i++)
+    board[firstBoard][i] = currentAr[i];
+  unsigned short emptyBoard = bfs(firstBoard);
+  printPath(emptyBoard, firstBoard);
   fclose(fp);
   return 0;
 }
-
 
 void enqueue(unsigned short number){
   queueElement * new = NULL;
@@ -120,9 +84,9 @@ unsigned short dequeue(){
   }
   unsigned short retval = (*qFront) -> num;
   if((*qFront) -> next == NULL){ //One element
-	free(ptr);
-	(*qFront) = (*qBack) = NULL;
-      }
+    free(ptr);
+    (*qFront) = (*qBack) = NULL;
+  }
   else{ //More than one element
     (*qFront) = (*qFront) -> next;
     free(ptr);
@@ -130,7 +94,40 @@ unsigned short dequeue(){
   return retval;
 }
 
+void initializeArray(int nextInt, bool currentAr[BOARDSIZE], FILE * fp){
+  while (nextInt != 0){
+    printf("%d\t", nextInt);
+    currentAr[nextInt-1] = true;
+    nextInt = readNextInt(fp);
+  }
+}
 
+unsigned short bfs(unsigned short firstBoard){
+  bool found = false;
+  unsigned short cNode = firstBoard;
+  enqueue(firstBoard);
+  while (!found){
+    cNode = dequeue(); //current node
+    seen[cNode] = true;
+    found = true;
+    int i;
+    for (i = 0; i < BOARDSIZE; i++){ //try all possible hitting positons (get adjacent nodes)
+      bool  newBoard[BOARDSIZE];
+      if (board[cNode][i]){
+	found = false;
+	getNextBoard(i, board[cNode], &newBoard);
+	unsigned short nBNum = boolToShort(newBoard);
+	if (!seen[nBNum]){
+	  parent[nBNum] = cNode;
+	  hitPosition[nBNum] = i;
+	  copyBoard(newBoard, board[nBNum]);
+	  enqueue(nBNum);
+	}
+      }
+    }
+  }
+  return cNode;
+}
 
 int readNextInt(FILE *fp){
   int in = fgetc(fp);
@@ -140,19 +137,19 @@ int readNextInt(FILE *fp){
       in = fgetc(fp);
   }
   while(in != -1 && isdigit(in)){
-    out=10*out + (in-48);
+    out = 10 * out + (in-48);
     in = fgetc(fp);
   }
   return out;
 }
 
 
-void getNextConf(char hit, bool current[16], bool (*new)[16]){
+void getNextBoard(char hit, bool current[BOARDSIZE], bool (*new)[BOARDSIZE]){
   int i;
   //printf("HITING AT %d\n", hit);
-  for(i = 0; i < 16; i++) 
+  for(i = 0; i < BOARDSIZE; i++)
     (*new)[i] = current[i];
-  (*new)[hit] = !((*new)[hit]);
+  (*new)[(int)hit] = !((*new)[(int)hit]);
   if(hit >= 4)
     (*new)[hit - 4]= !((*new)[hit - 4]);
   if(hit <= 11)
@@ -162,29 +159,44 @@ void getNextConf(char hit, bool current[16], bool (*new)[16]){
   if(hit % 4 != 3)
     (*new)[hit + 1]= !((*new)[hit + 1]);
 
-  //  printConf(*new);
+  //  printBoard(*new);
 }
 
-unsigned short boolToShort(bool a[16]){
+unsigned short boolToShort(bool a[BOARDSIZE]){
   unsigned short retval=0;
   int i;
-  for(i=15; i>=0; i--){
+  for(i = 15; i >= 0; i--){
     if(a[i])
       retval++;
-    retval*=2;
+    retval *= 2;
   }
   return retval;
 }
 
-void printConf(bool a[16]){
+
+void copyBoard(bool from[BOARDSIZE], bool to[BOARDSIZE]){
+  int i;
+  for(i = 0; i < BOARDSIZE; i++)
+    to[i] = from[i];
+}
+
+void printPath(unsigned short cNode, unsigned short first){
+  while(cNode != first){
+    printf("%d\t", hitPosition[cNode] + 1);
+    cNode = parent[cNode];
+  }
+  printf("\n");
+}
+
+void printBoard(bool a[BOARDSIZE]){
   int i;
   printf("\n");
-  for (i=0; i<16; i++){
+  for (i = 0; i < BOARDSIZE; i++){
     if(a[i] == 1)
       printf("%d\t", i);
   }
   printf("\n");
-  for (i=0; i<16; i++){
+  for (i = 0; i < BOARDSIZE; i++){
     if (a[i] == 1)
       printf("1");
     else
@@ -194,4 +206,3 @@ void printConf(bool a[16]){
   }
   printf("\n");
 }
-

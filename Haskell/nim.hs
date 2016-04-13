@@ -189,8 +189,7 @@ optimalMoveTwoHeapsLeft stars = (nextHeap, (maximum stars) - (minimum nonZero))
 			      nextHeap = if maybeNext == Nothing then -1 else fromJust maybeNext
 			      nonZero = filter (/=0) stars
 
-
-
+---picks a random heap and a random number of items to remove from the stars
 getRandomMove :: [Int] -> (IO Int, IO Int)
 getRandomMove stars = (nextHeap, itemsToRemove)
 	      where nonZero = filter (/=0) stars
@@ -201,15 +200,17 @@ getRandomMove stars = (nextHeap, itemsToRemove)
 		    		    items <-getItemsToRemove stars nextHeap
 				    return items
 
+---given a list of ints, randomly choose one of these
 randomlyChooseHeap :: [Int] -> IO Int
-randomlyChooseHeap stars = do
+randomlyChooseHeap xs = do
 	       	 r<-rd 0 ((length nonZero)-1)
 		 return (nonZero !! r)
-		 where nonZero = filter (/=0) stars
+		 where nonZero = filter (/=0) xs
 
+---returns a random number s.t. the value is between 1 and the element at the index specified by the second argument
 getItemsToRemove :: [Int] -> IO Int -> IO Int
-getItemsToRemove stars nextHeap = do
-		       		h <- nextHeap
-		       		i <- rd 1 (stars !! h)
-				return i
+getItemsToRemove xs index = do
+		       		h <- index
+		       		sel <- rd 1 (xs !! h)
+				return sel
 		       		

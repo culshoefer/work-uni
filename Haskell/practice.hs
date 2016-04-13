@@ -105,3 +105,26 @@ allEqual f n = all (== f 0) (map f [1..n])
 foldl' :: (a -> b -> b) -> [a] -> b -> b
 foldl' _ [] z = z
 foldl' (op) (x:xs) z = foldl' (op) xs (op x z) 
+
+getInt :: IO Int
+getInt = do
+       	 a <- getLine
+	 return (read a :: Int)
+
+getInts :: IO [Int]
+getInts = do
+	 a <- getInt
+	 if a == 0 
+	    then return [] 
+	    else do
+	    	 b <- getInts
+		 return (a:b)
+
+qsort :: [Int] -> [Int]
+qsort [] =  []
+qsort (x:xs) = (qsort $ filter (<=x) xs) ++ [x] ++ (qsort $ filter (>x) xs)
+
+sortInput :: IO ()
+sortInput = do
+	    d <- getInts
+	    print $ qsort d

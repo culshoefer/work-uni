@@ -23,6 +23,7 @@ typedef struct queueElement{
   struct queueElement * next;
 }queueElement;
 
+unsigned int numBoardsConsidered = 0;
 
 queueElement **qBack = NULL;
 queueElement **qFront = NULL;
@@ -56,6 +57,7 @@ int main(void){
   for (i = 0; i < BOARDSIZE;i++)
     board[firstBoard][i] = currentAr[i];
   unsigned short emptyBoard = bfs(firstBoard);
+  printf("done bfs, empty board is board number: %d, first board: %d\n", emptyBoard, firstBoard);
   printPath(emptyBoard, firstBoard);
   fclose(fp);
   return 0;
@@ -95,7 +97,7 @@ unsigned short dequeue(){
 }
 
 void initializeArray(int nextInt, bool currentAr[BOARDSIZE], FILE * fp){
-  while (nextInt != 0){
+  while (nextInt){
     printf("%d\t", nextInt);
     currentAr[nextInt-1] = true;
     nextInt = readNextInt(fp);
@@ -108,6 +110,8 @@ unsigned short bfs(unsigned short firstBoard){
   enqueue(firstBoard);
   while (!found){
     cNode = dequeue(); //current node
+    numBoardsConsidered++;
+    printf("%d\n", numBoardsConsidered);
     seen[cNode] = true;
     found = true;
     int i;
@@ -159,7 +163,7 @@ void getNextBoard(char hit, bool current[BOARDSIZE], bool (*new)[BOARDSIZE]){
   if(hit % 4 != 3)
     (*new)[hit + 1]= !((*new)[hit + 1]);
 
-  //  printBoard(*new);
+  //printBoard(*new);
 }
 
 unsigned short boolToShort(bool a[BOARDSIZE]){
@@ -182,7 +186,7 @@ void copyBoard(bool from[BOARDSIZE], bool to[BOARDSIZE]){
 
 void printPath(unsigned short cNode, unsigned short first){
   while(cNode != first){
-    printf("%d\t", hitPosition[cNode] + 1);
+    printf("%d\tboard %d\n", hitPosition[cNode] + 1, cNode);
     cNode = parent[cNode];
   }
   printf("\n");

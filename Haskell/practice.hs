@@ -17,7 +17,7 @@ and' x y | x = y
         | otherwise = False
 
 id' :: a -> a
-id' x = x
+id' = \a -> a
 
 caseTest :: [Char] -> Int
 caseTest "IEP" = 0
@@ -30,9 +30,6 @@ applTwoFunctions f g x = (f x,g x)
 
 applAllFunctions :: [(a -> a)] -> a -> a
 applAllFunctions fs x = foldr (\f acc -> f $ acc) x fs
-
-length' :: [a] -> Int
-length' xs = sum [1 | _ <- xs]
 
 doubleAll :: (Num a) => [a] -> [a]
 doubleAll xs = [2*x | x <- xs]
@@ -49,9 +46,6 @@ map' f xs = [f x | x <- xs]
 filter' :: (a -> Bool) -> [a] -> [a]
 filter' p xs = [x | x <- xs, p x]
 
-length'' :: [a] -> Int
-length'' = foldr(\_ acc -> acc + 1) 0
-
 doubleAll' :: (Num a) => [a] -> [a]
 doubleAll' = map (*2)
 
@@ -60,9 +54,6 @@ doubleAll' = map (*2)
 
 getFactors :: Int -> [Int]
 getFactors a = filter (\x -> a `mod` x == 0) [1..a]
-
-map'' :: (a -> b) -> [a] -> [b]
-map'' f = foldr(\x acc-> f x : acc) []
 
 filter''' :: (a -> Bool) -> [a] -> [a]
 filter''' _ [] = []
@@ -128,3 +119,47 @@ sortInput :: IO ()
 sortInput = do
 	    d <- getInts
 	    print $ qsort d
+
+
+---labsheet 3
+
+mult :: (Num a) => [a] -> a
+mult = foldr1 (*)
+
+posList :: [Int] -> [Int]
+posList = filter (>0)
+
+trueList :: [Bool] -> Bool
+trueList = all id
+
+trueList' :: [Bool] -> Bool
+trueList' = foldr (&&) True
+
+prop_trueList :: [Bool] -> Bool
+prop_trueList xs = trueList xs == trueList' xs
+
+maxList :: (Ord a) => [a] -> a
+maxList = foldr1 max
+
+prop_maxList :: (Ord a) => [a] -> Bool
+prop_maxList [] = True
+prop_maxList xs = maxList xs == maximum xs
+
+length' :: [a] -> Int
+length' = foldr (+) 0 . map (\_ -> 1)
+
+length'' :: [a] -> Int
+length'' xs = sum [1 | _ <- xs]
+
+length''' :: [a] -> Int
+length''' [] = 0
+length''' (x:xs) = 1 + length''' xs
+
+length'''' :: [a] -> Int
+length'''' = foldr (\_ a -> a+1) 0
+
+myMap :: (a -> b) -> [a] -> [b]
+myMap f = foldr (\x a-> f x :a) []
+
+---prop_map :: (Eq b) => (a -> b) -> [a] -> Bool
+---prop_map f xs = map f xs == myMap f xs

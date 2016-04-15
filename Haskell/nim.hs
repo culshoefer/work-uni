@@ -119,13 +119,14 @@ binary n | n `mod` 2 == 0 = (binary $ div n 2) ++ [0]
 ---gets the binary representation of an int
 getBinary :: Int -> BinaryNumber
 getBinary 0 = []
-getBinary n | n `mod` 2 == 0 = (getBinary half) ++ [Zero]
-	    | otherwise = (getBinary half) ++ [One]
+getBinary n | n `mod` 2 == 0 = reverse (Zero:bin)
+	    | otherwise = reverse (One:bin)
 	  where half = n `div` 2
+	  	bin = getBinary half
 
 ---gets the int representation of a binary number
 getIntFromBinary :: BinaryNumber -> Int
-getIntFromBinary xs = foldl (\acc x -> if x == Zero then 2 * acc else 2 * acc + 1) 0 xs
+getIntFromBinary xs = foldl' (\acc x -> if x == Zero then 2 * acc else 2 * acc + 1) 0 xs
 
 ---will stack overflow
 prop_BinConversion :: Int -> Bool
@@ -156,12 +157,14 @@ a `xor` b | a == b = Zero
 
 ---xor on two binary numbers
 xorNum :: BinaryNumber -> BinaryNumber -> BinaryNumber
-a `xorNum` b = removeLeadingZeroes $ zipWith xor (fst eqLengths) (snd eqLengths)
+a `xorNum` b = removeLeadingZeroes $ zipWith xor newA newB
   	   where eqLengths = curry makeLengthsEqual a b
+	   	 newA = fst eqLengths
+		 newB = snd eqLengths
 
 ---xor on two ints
 decXor :: Int -> Int -> Int
-a `decXor` b = getIntFromBinary ((getBinary a) `xorNum` (getBinary b))
+a `decXor` b = getIntFromBinary $ xorNum (getBinary a) (getBinary b)
 
 ---binary digital sum of a list of integers
 bdsDec :: [Int] -> Int
@@ -170,7 +173,7 @@ bdsDec xs = getIntFromBinary . binaryDigitalSum $ map getBinary xs
 ---successively calls xorSum with each argument
 binaryDigitalSum :: [BinaryNumber] -> BinaryNumber
 binaryDigitalSum [] = []
-binaryDigitalSum xs = foldr1 (\x acc -> x `xorNum` acc) xs
+binaryDigitalSum xs = foldr1' xorNum xs
 
 ---generates an optimal move (no misere game)
 getOptimalMove :: [Int] -> (Int, Int)

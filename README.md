@@ -5,7 +5,8 @@ However, this repository does not contain *every single* code snippet I ever cre
 
 As of now, this means for the most part
 
-1) some C things (to be honest, it is only a Breadth-First-Search exercise)
-2) some Haskell things
+1. some C things
+
+2. some Haskell things
 
 Have fun checking out the things!

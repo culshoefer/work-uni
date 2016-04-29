@@ -1,8 +1,10 @@
 # work-uni
-This repository is for these university files that I can make public because they are not relevant to the course anymore.
-However, this repository does not contain *every single* code snippet I ever created in university.
+This repository is for the university files that are not relevant to the course anymore (i.e. no active coursework)
 
-As of now, this just means
+However, this repository does not contain *every single* code snippet I ever created in university (duh).
+
+As of now, this means for the most part
+
 1) some C things (to be honest, it is only a Breadth-First-Search exercise)
 2) some Haskell things
 
